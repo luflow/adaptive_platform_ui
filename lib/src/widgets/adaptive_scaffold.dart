@@ -176,6 +176,76 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
   final GlobalKey<_MinimizableTabBarState> _tabBarKey =
       GlobalKey<_MinimizableTabBarState>();
 
+  /// Overlay for the iOS 26+ native toolbar title area. The native title is a
+  /// plain string, so a subtitle (or custom widget) is drawn as a Flutter
+  /// overlay instead; returns null when the native title can render natively.
+  Widget? _buildIOS26TitleOverlay() {
+    if (widget.appBar?.titleWidget != null) return widget.appBar!.titleWidget;
+    final subtitle = widget.appBar?.subtitle;
+    if (widget.appBar?.title == null || subtitle == null || subtitle.isEmpty) {
+      return null;
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          widget.appBar!.title!,
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+        ),
+        Text(
+          subtitle,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.normal,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget? _buildTitleWidget() {
+    if (widget.appBar?.titleWidget != null) return widget.appBar!.titleWidget;
+    if (widget.appBar?.title == null) return null;
+    final subtitle = widget.appBar?.subtitle;
+    if (subtitle == null || subtitle.isEmpty) return Text(widget.appBar!.title!);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(widget.appBar!.title!),
+        Text(
+          subtitle,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.normal,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget? _buildMaterialTitleWidget() {
+    if (widget.appBar?.titleWidget != null) return widget.appBar!.titleWidget;
+    if (widget.appBar?.title == null) return null;
+    final subtitle = widget.appBar?.subtitle;
+    if (subtitle == null || subtitle.isEmpty) return Text(widget.appBar!.title!);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(widget.appBar!.title!),
+        Text(
+          subtitle,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.normal,
+            color:
+                Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _wrapWithDrawerIfNeeded(Widget child) {
     if (widget.drawer == null && widget.endDrawer == null) {
       return child;
@@ -256,6 +326,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
           actions: widget.appBar?.actions,
           leading: widget.appBar?.leading,
           tintColor: widget.appBar?.tintColor,
+          titleWidget: _buildIOS26TitleOverlay(),
           minimizeBehavior: widget.minimizeBehavior,
           enableBlur: widget.enableBlur,
           useHeroBackButton: widget.useHeroBackButton,
@@ -298,9 +369,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
                 PlatformInfo.isIOS26OrHigher() && useNativeToolbar
                 ? false
                 : true, // Let CupertinoNavigationBar handle back button naturally
-            middle: widget.appBar!.title != null
-                ? Text(widget.appBar!.title!)
-                : null,
+            middle: _buildTitleWidget(),
             trailing:
                 widget.appBar!.actions != null &&
                     widget.appBar!.actions!.isNotEmpty
@@ -488,6 +557,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
       // Priority 2: Build from title, actions, leading (if appBar has content)
       else if (widget.appBar != null &&
           (widget.appBar!.title != null ||
+              widget.appBar!.titleWidget != null ||
               (widget.appBar!.actions != null &&
                   widget.appBar!.actions!.isNotEmpty) ||
               effectiveLeading != null ||
@@ -497,9 +567,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
               PlatformInfo.isIOS26OrHigher() && useNativeToolbar
               ? false
               : true, // Let CupertinoNavigationBar handle back button naturally
-          middle: widget.appBar!.title != null
-              ? Text(widget.appBar!.title!)
-              : null,
+          middle: _buildTitleWidget(),
           trailing:
               widget.appBar!.actions != null &&
                   widget.appBar!.actions!.isNotEmpty
@@ -578,13 +646,13 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
       // Priority 2: Build from title, actions, leading (if appBar has content)
       else if (widget.appBar != null &&
           (widget.appBar!.title != null ||
+              widget.appBar!.titleWidget != null ||
               (widget.appBar!.actions != null &&
                   widget.appBar!.actions!.isNotEmpty) ||
               widget.appBar!.leading != null)) {
         appBar = AppBar(
-          title: widget.appBar!.title != null
-              ? Text(widget.appBar!.title!)
-              : null,
+          title: _buildMaterialTitleWidget(),
+          centerTitle: widget.appBar!.titleWidget != null,
           actions: widget.appBar!.actions?.map((action) {
             if (action.title != null) {
               return TextButton(
@@ -677,9 +745,8 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
     // Priority 2: Build AppBar if widget.appBar is provided (even if empty - for automatic back button)
     else if (widget.appBar != null) {
       appBar = AppBar(
-        title: widget.appBar!.title != null
-            ? Text(widget.appBar!.title!)
-            : null,
+        title: _buildMaterialTitleWidget(),
+        centerTitle: widget.appBar!.titleWidget != null,
         actions: widget.appBar!.actions?.map((action) {
           if (action.title != null) {
             return TextButton(
