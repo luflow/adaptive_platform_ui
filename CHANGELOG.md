@@ -1,5 +1,8 @@
 # Changelog
 
+## [Unreleased]
+* **FIX**: iOS status bar icons now follow the effective theme brightness — `AdaptiveApp`'s Cupertino path wraps the app in an `AnnotatedRegion<SystemUiOverlayStyle>`, so forcing a `ThemeMode` different from the system brightness no longer leaves the status bar unreadable (@luflow)
+
 ## [0.1.109]
 * **NEW**: `triggerOnLongPress` and `onTap` on popup menu buttons — tap fires `onTap`, long-press opens the menu (@yuriylybimov)
 * **NEW**: `isDestructive` on `AdaptivePopupMenuItem` — renders destructive (red) styling on Material, iOS <26, and iOS 26+ native menus (@yuriylybimov)
