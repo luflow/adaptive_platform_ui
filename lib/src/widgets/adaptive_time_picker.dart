@@ -1,6 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:interval_time_picker/interval_time_picker.dart';
+// The main library imports but doesn't re-export the VisibleStep enum, so pull
+// it in directly to name the dial-label density.
+import 'package:interval_time_picker/models/visible_step.dart';
 import '../platform/platform_info.dart';
+import 'minute_interval.dart';
 
 /// An adaptive time picker that renders platform-specific styles
 ///
@@ -16,32 +21,38 @@ class AdaptiveTimePicker {
     required BuildContext context,
     required TimeOfDay initialTime,
     bool use24HourFormat = false,
+    int minuteInterval = 1,
   }) async {
     if (PlatformInfo.isIOS) {
       return _showCupertinoTimePicker(
         context: context,
         initialTime: initialTime,
         use24HourFormat: use24HourFormat,
+        minuteInterval: minuteInterval,
       );
     }
 
     // Android - Use Material TimePicker
-    return _showMaterialTimePicker(context: context, initialTime: initialTime);
+    return _showMaterialTimePicker(
+      context: context,
+      initialTime: initialTime,
+      use24HourFormat: use24HourFormat,
+      minuteInterval: minuteInterval,
+    );
   }
 
   static Future<TimeOfDay?> _showCupertinoTimePicker({
     required BuildContext context,
     required TimeOfDay initialTime,
     required bool use24HourFormat,
+    required int minuteInterval,
   }) async {
-    // Convert TimeOfDay to DateTime for CupertinoDatePicker
+    // Convert TimeOfDay to DateTime for CupertinoDatePicker; align onto the
+    // grid first, as the picker asserts the initial value is a valid interval.
     final now = DateTime.now();
-    DateTime selectedDateTime = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      initialTime.hour,
-      initialTime.minute,
+    DateTime selectedDateTime = alignDateTimeToInterval(
+      DateTime(now.year, now.month, now.day, initialTime.hour, initialTime.minute),
+      minuteInterval,
     );
 
     final result = await showCupertinoModalPopup<DateTime>(
@@ -50,6 +61,7 @@ class AdaptiveTimePicker {
         return _CupertinoTimePickerContent(
           initialDateTime: selectedDateTime,
           use24HourFormat: use24HourFormat,
+          minuteInterval: minuteInterval,
           onTimeSelected: (dateTime) => selectedDateTime = dateTime,
         );
       },
@@ -67,8 +79,61 @@ class AdaptiveTimePicker {
   static Future<TimeOfDay?> _showMaterialTimePicker({
     required BuildContext context,
     required TimeOfDay initialTime,
+    required bool use24HourFormat,
+    required int minuteInterval,
   }) async {
-    return showTimePicker(context: context, initialTime: initialTime);
+    final builder = use24HourFormat
+        ? (BuildContext ctx, Widget? child) => MediaQuery(
+              data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
+              child: child!,
+            )
+        : null;
+
+    // No stepping requested → the plain Material picker (every minute).
+    if (minuteInterval <= 1) {
+      return showTimePicker(
+        context: context,
+        initialTime: initialTime,
+        builder: builder,
+      );
+    }
+
+    // Genuine stepped Material dial: only the interval minutes are selectable
+    // while picking — no post-hoc rounding. showIntervalTimePicker is a fork of
+    // Flutter's own time picker, so it inherits Material 3 theming and the
+    // keyboard input mode. It keeps an off-grid initial minute as-is, so align
+    // the initial value first.
+    return showIntervalTimePicker(
+      context: context,
+      initialTime: alignTimeOfDayToInterval(initialTime, minuteInterval),
+      interval: minuteInterval,
+      visibleStep: _visibleStepForInterval(minuteInterval),
+      builder: builder,
+    );
+  }
+
+  /// Map a minute interval to the matching dial-label density. Falls back to
+  /// 5-minute labels for intervals without a dedicated step.
+  static VisibleStep _visibleStepForInterval(int interval) {
+    switch (interval) {
+      case 6:
+        return VisibleStep.sixths;
+      case 10:
+        return VisibleStep.tenths;
+      case 12:
+        return VisibleStep.twelfths;
+      case 15:
+        return VisibleStep.fifteenths;
+      case 20:
+        return VisibleStep.twentieths;
+      case 30:
+        return VisibleStep.thirtieths;
+      case 60:
+        return VisibleStep.sixtieth;
+      case 5:
+      default:
+        return VisibleStep.fifths;
+    }
   }
 }
 
@@ -77,11 +142,13 @@ class _CupertinoTimePickerContent extends StatefulWidget {
   const _CupertinoTimePickerContent({
     required this.initialDateTime,
     required this.use24HourFormat,
+    required this.minuteInterval,
     required this.onTimeSelected,
   });
 
   final DateTime initialDateTime;
   final bool use24HourFormat;
+  final int minuteInterval;
   final ValueChanged<DateTime> onTimeSelected;
 
   @override
@@ -149,6 +216,7 @@ class _CupertinoTimePickerContentState
             child: CupertinoDatePicker(
               mode: CupertinoDatePickerMode.time,
               use24hFormat: widget.use24HourFormat,
+              minuteInterval: widget.minuteInterval,
               initialDateTime: widget.initialDateTime,
               onDateTimeChanged: (DateTime newDateTime) {
                 setState(() {
