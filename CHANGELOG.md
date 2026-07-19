@@ -1,8 +1,5 @@
 # Changelog
 
-## [Unreleased]
-* **NEW**: `subtitle` and `titleWidget` on `AdaptiveAppBar` — show a smaller subtitle below the title, or replace the title area with any widget. Works on iOS 26+ native toolbar (as a centered overlay), iOS <26 `CupertinoNavigationBar`, and Material `AppBar` (@luflow)
-
 ## [0.1.109]
 * **NEW**: `triggerOnLongPress` and `onTap` on popup menu buttons — tap fires `onTap`, long-press opens the menu (@yuriylybimov)
 * **NEW**: `isDestructive` on `AdaptivePopupMenuItem` — renders destructive (red) styling on Material, iOS <26, and iOS 26+ native menus (@yuriylybimov)
