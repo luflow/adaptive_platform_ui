@@ -1,8 +1,5 @@
 # Changelog
 
-## [Unreleased]
-* **FIX**: Material alert dialogs now place the cancel button first (left of the confirming actions), following the Material convention of dismissive-left / confirming-right (@luflow)
-
 ## [0.1.109]
 * **NEW**: `triggerOnLongPress` and `onTap` on popup menu buttons — tap fires `onTap`, long-press opens the menu (@yuriylybimov)
 * **NEW**: `isDestructive` on `AdaptivePopupMenuItem` — renders destructive (red) styling on Material, iOS <26, and iOS 26+ native menus (@yuriylybimov)
