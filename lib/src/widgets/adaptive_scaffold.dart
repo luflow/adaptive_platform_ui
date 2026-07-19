@@ -176,73 +176,56 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
   final GlobalKey<_MinimizableTabBarState> _tabBarKey =
       GlobalKey<_MinimizableTabBarState>();
 
-  /// Overlay for the iOS 26+ native toolbar title area. The native title is a
-  /// plain string, so a subtitle (or custom widget) is drawn as a Flutter
-  /// overlay instead; returns null when the native title can render natively.
-  Widget? _buildIOS26TitleOverlay() {
+  /// Builds the app bar title area, optionally with a subtitle below it.
+  ///
+  /// Returns [AdaptiveAppBar.titleWidget] verbatim when provided; otherwise a
+  /// title (plus subtitle when set). When [nativeTitleFallback] is true the
+  /// plain-title case returns null so the iOS 26 native toolbar can render the
+  /// title itself; the other paths return a plain `Text` instead.
+  Widget? _buildAppBarTitle({
+    CrossAxisAlignment crossAxisAlignment = CrossAxisAlignment.center,
+    TextStyle? titleStyle,
+    double subtitleFontSize = 12,
+    Color? subtitleColor,
+    bool nativeTitleFallback = false,
+  }) {
     if (widget.appBar?.titleWidget != null) return widget.appBar!.titleWidget;
+    final title = widget.appBar?.title;
+    if (title == null) return null;
     final subtitle = widget.appBar?.subtitle;
-    if (widget.appBar?.title == null || subtitle == null || subtitle.isEmpty) {
-      return null;
+    if (subtitle == null || subtitle.isEmpty) {
+      return nativeTitleFallback ? null : Text(title, style: titleStyle);
     }
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: crossAxisAlignment,
       children: [
-        Text(
-          widget.appBar!.title!,
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-        ),
-        Text(
-          subtitle,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.normal,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget? _buildTitleWidget() {
-    if (widget.appBar?.titleWidget != null) return widget.appBar!.titleWidget;
-    if (widget.appBar?.title == null) return null;
-    final subtitle = widget.appBar?.subtitle;
-    if (subtitle == null || subtitle.isEmpty) return Text(widget.appBar!.title!);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(widget.appBar!.title!),
-        Text(
-          subtitle,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.normal,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget? _buildMaterialTitleWidget() {
-    if (widget.appBar?.titleWidget != null) return widget.appBar!.titleWidget;
-    if (widget.appBar?.title == null) return null;
-    final subtitle = widget.appBar?.subtitle;
-    if (subtitle == null || subtitle.isEmpty) return Text(widget.appBar!.title!);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(widget.appBar!.title!),
+        Text(title, style: titleStyle),
         Text(
           subtitle,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: subtitleFontSize,
             fontWeight: FontWeight.normal,
-            color:
-                Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+            color: subtitleColor,
           ),
         ),
       ],
+    );
+  }
+
+  /// iOS 26+ native toolbar title overlay. The native title is a plain string,
+  /// so a subtitle (or custom widget) is drawn as a Flutter overlay instead.
+  /// Colors resolve from the ambient brightness so the overlay matches the
+  /// native title in light and dark mode.
+  Widget? _buildIOS26TitleOverlay() {
+    return _buildAppBarTitle(
+      nativeTitleFallback: true,
+      titleStyle: TextStyle(
+        fontSize: 17,
+        fontWeight: FontWeight.w600,
+        color: CupertinoColors.label.resolveFrom(context),
+      ),
+      subtitleColor: CupertinoColors.secondaryLabel.resolveFrom(context),
     );
   }
 
@@ -369,7 +352,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
                 PlatformInfo.isIOS26OrHigher() && useNativeToolbar
                 ? false
                 : true, // Let CupertinoNavigationBar handle back button naturally
-            middle: _buildTitleWidget(),
+            middle: _buildAppBarTitle(),
             trailing:
                 widget.appBar!.actions != null &&
                     widget.appBar!.actions!.isNotEmpty
@@ -567,7 +550,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
               PlatformInfo.isIOS26OrHigher() && useNativeToolbar
               ? false
               : true, // Let CupertinoNavigationBar handle back button naturally
-          middle: _buildTitleWidget(),
+          middle: _buildAppBarTitle(),
           trailing:
               widget.appBar!.actions != null &&
                   widget.appBar!.actions!.isNotEmpty
@@ -651,7 +634,13 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
                   widget.appBar!.actions!.isNotEmpty) ||
               widget.appBar!.leading != null)) {
         appBar = AppBar(
-          title: _buildMaterialTitleWidget(),
+          title: _buildAppBarTitle(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            subtitleFontSize: 13,
+            subtitleColor: Theme.of(
+              context,
+            ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+          ),
           centerTitle: widget.appBar!.titleWidget != null,
           actions: widget.appBar!.actions?.map((action) {
             if (action.title != null) {
@@ -745,7 +734,13 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
     // Priority 2: Build AppBar if widget.appBar is provided (even if empty - for automatic back button)
     else if (widget.appBar != null) {
       appBar = AppBar(
-        title: _buildMaterialTitleWidget(),
+        title: _buildAppBarTitle(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          subtitleFontSize: 13,
+          subtitleColor: Theme.of(
+            context,
+          ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+        ),
         centerTitle: widget.appBar!.titleWidget != null,
         actions: widget.appBar!.actions?.map((action) {
           if (action.title != null) {
