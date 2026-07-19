@@ -1,7 +1,7 @@
 # Changelog
 
 ## [Unreleased]
-* **NEW**: `minuteInterval` on `AdaptiveTimePicker` and `AdaptiveDatePicker` — restricts selectable minutes to a fixed grid (e.g. 15-minute steps). Uses `CupertinoDatePicker`'s native `minuteInterval` on iOS and a stepped Material dial (`interval_time_picker`) on Android; initial values are auto-aligned to the grid (@luflow)
+* **NEW**: `minuteInterval` on `AdaptiveTimePicker` and `AdaptiveDatePicker` — restricts results to a fixed minute grid (e.g. 15-minute steps). Uses `CupertinoDatePicker`'s native `minuteInterval` on iOS; on Android the Material picker's confirmed value is snapped to the nearest interval. Initial values are auto-aligned to the grid; no extra dependencies (@luflow)
 * **NEW**: `AdaptiveDatePicker` now honors `CupertinoDatePickerMode.dateAndTime` and `monthYear` on Android too — Material shows a date picker followed by a time picker (with `use24HourFormat` support), and month-year picks normalize to the 1st of the month (@luflow)
 
 ## [0.1.109]

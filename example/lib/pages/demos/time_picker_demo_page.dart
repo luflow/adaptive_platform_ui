@@ -79,7 +79,9 @@ class _TimePickerDemoPageState extends State<TimePickerDemoPage> {
             isDark,
             title: '15-Minute Interval',
             description:
-                'Only quarter-hour values are selectable (minuteInterval: 15)',
+                'Results snap to quarter-hour values (minuteInterval: 15) — '
+                'native interval wheel on iOS, nearest-value rounding on '
+                'Android',
             child: _buildTimePickerButton(
               context,
               isDark,

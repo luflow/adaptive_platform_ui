@@ -13,10 +13,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  # Material time picker with a genuine minute-interval dial (fork of Flutter's
-  # own time_picker). Used on Android to step e.g. in 15-min increments instead
-  # of rounding the result after the fact.
-  interval_time_picker: ^4.0.0
 
 dev_dependencies:
   flutter_test:

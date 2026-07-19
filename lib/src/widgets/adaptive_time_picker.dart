@@ -1,9 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:interval_time_picker/interval_time_picker.dart';
-// The main library imports but doesn't re-export the VisibleStep enum, so pull
-// it in directly to name the dial-label density.
-import 'package:interval_time_picker/models/visible_step.dart';
 import '../platform/platform_info.dart';
 import 'minute_interval.dart';
 
@@ -16,7 +12,12 @@ class AdaptiveTimePicker {
 
   /// Shows a platform-adaptive time picker
   ///
-  /// Returns the selected [TimeOfDay] or null if cancelled
+  /// Returns the selected [TimeOfDay] or null if cancelled.
+  ///
+  /// [minuteInterval] restricts results to a fixed minute grid (e.g. 15-minute
+  /// steps). On iOS the Cupertino wheel only offers interval minutes; on
+  /// Android the Material picker stays unrestricted and the confirmed value is
+  /// snapped to the nearest interval.
   static Future<TimeOfDay?> show({
     required BuildContext context,
     required TimeOfDay initialTime,
@@ -89,51 +90,15 @@ class AdaptiveTimePicker {
             )
         : null;
 
-    // No stepping requested → the plain Material picker (every minute).
-    if (minuteInterval <= 1) {
-      return showTimePicker(
-        context: context,
-        initialTime: initialTime,
-        builder: builder,
-      );
-    }
-
-    // Genuine stepped Material dial: only the interval minutes are selectable
-    // while picking — no post-hoc rounding. showIntervalTimePicker is a fork of
-    // Flutter's own time picker, so it inherits Material 3 theming and the
-    // keyboard input mode. It keeps an off-grid initial minute as-is, so align
-    // the initial value first.
-    return showIntervalTimePicker(
+    // Material has no native minute stepping; snap the picked value onto the
+    // grid afterwards instead (no-op for minuteInterval <= 1).
+    final picked = await showTimePicker(
       context: context,
       initialTime: alignTimeOfDayToInterval(initialTime, minuteInterval),
-      interval: minuteInterval,
-      visibleStep: _visibleStepForInterval(minuteInterval),
       builder: builder,
     );
-  }
-
-  /// Map a minute interval to the matching dial-label density. Falls back to
-  /// 5-minute labels for intervals without a dedicated step.
-  static VisibleStep _visibleStepForInterval(int interval) {
-    switch (interval) {
-      case 6:
-        return VisibleStep.sixths;
-      case 10:
-        return VisibleStep.tenths;
-      case 12:
-        return VisibleStep.twelfths;
-      case 15:
-        return VisibleStep.fifteenths;
-      case 20:
-        return VisibleStep.twentieths;
-      case 30:
-        return VisibleStep.thirtieths;
-      case 60:
-        return VisibleStep.sixtieth;
-      case 5:
-      default:
-        return VisibleStep.fifths;
-    }
+    if (picked == null) return null;
+    return alignTimeOfDayToInterval(picked, minuteInterval);
   }
 }
 
