@@ -11,11 +11,15 @@ let package = Package(
     products: [
         .library(name: "adaptive-platform-ui", targets: ["adaptive_platform_ui"])
     ],
-    dependencies: [],
+    dependencies: [
+        .package(name: "FlutterFramework", path: "../FlutterFramework")
+    ],
     targets: [
         .target(
             name: "adaptive_platform_ui",
-            dependencies: []
+            dependencies: [
+                .product(name: "FlutterFramework", package: "FlutterFramework")
+            ]
         )
     ]
 )
